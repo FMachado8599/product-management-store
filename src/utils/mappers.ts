@@ -33,7 +33,7 @@ export function apiToUi(p: ApiItem): UiProduct {
       estado === "Terminado"
         ? (estado as UiProduct["estado"])
         : undefined,
-    creador: firstAssignee || undefined, // placeholder hasta tener "Created by"
+    creador: firstAssignee || undefined,
     fecha: formatDate(p.lastEdited),
     origen: p.tipo === "Nuevo" || p.tipo === "Modificar" ? p.tipo : undefined,
   };
