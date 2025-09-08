@@ -83,7 +83,7 @@
 
 //   const { items: products, setItems, loading, error, refresh } = useItems();
 
-//   // Form states
+//   Form states
 //   const [newProductForm, setNewProductForm] = useState({
 //     nombre: "",
 //     link: "",
@@ -107,7 +107,7 @@
 //   } | null>(null);
 //   const [urlNotFound, setUrlNotFound] = useState(false);
 
-//   // Keyboard shortcuts
+//   Keyboard shortcuts
 //   useEffect(() => {
 //     const handleKeyDown = (e: KeyboardEvent) => {
 //       if (e.key === "t" || e.key === "T") {
@@ -120,7 +120,7 @@
 //       }
 //       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
 //         e.preventDefault();
-//         // Submit active form
+//         Submit active form
 //       }
 //     };
 
@@ -128,9 +128,9 @@
 //     return () => document.removeEventListener("keydown", handleKeyDown);
 //   }, [theme, setTheme]);
 
-//   // Mock URL resolution
+//   Mock URL resolution
 //   const resolveUrl = async (url: string) => {
-//     // Simulate API call
+//     Simulate API call
 //     await new Promise((resolve) => setTimeout(resolve, 500));
 
 //     const existingProduct = products.find((p) => p.link === url);
@@ -146,7 +146,7 @@
 //     }
 //   };
 
-//   // Handle URL input change
+//   Handle URL input change
 //   useEffect(() => {
 //     if (modifyProductForm.url) {
 //       const timeoutId = setTimeout(() => {
@@ -159,7 +159,7 @@
 //     }
 //   }, [modifyProductForm.url]);
 
-//   // Filter and sort products
+//   Filter and sort products
 //   const filteredProducts = useMemo(() => {
 //     const filtered = products.filter((product) => {
 //       const matchesSearch =
@@ -198,7 +198,7 @@
 //     return filtered;
 //   }, [products, searchTerm, filters, sortBy, sortOrder]);
 
-//   // Pagination
+//   Pagination
 //   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 //   const paginatedProducts = filteredProducts.slice(
 //     (currentPage - 1) * itemsPerPage,
@@ -304,7 +304,7 @@
 //         if (product.id === id) {
 //           const updated = { ...product, ...updates };
 
-//           // Add to history
+//           Add to history
 //           const changes = Object.entries(updates).map(([key, value]) => {
 //             if (key === "estado") return `Estado cambiado a ${value}`;
 //             if (key === "prioridad") return `Prioridad cambiada a ${value}`;
@@ -1182,12 +1182,21 @@
 // }
 
 "use client";
+import { useEffect } from "react";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchProducts } from "@/store/slices/productsSlice";
 import ProductsTabs from "@c/products/tabs/ProductsTabs";
 import FiltersBar from "@c/products/filters/FiltersBar";
 import ProductsTable from "@c/products/table/ProductsTable";
 import EditTaskForm from "@/components/products/forms/EditTaskForm";
 
 export default function ProductosPage() {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(360px,480px)_1fr] gap-4 p-4">
       <section className="space-y-4">

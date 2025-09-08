@@ -1,42 +1,43 @@
-// src/components/products/table/ProductsTable.tsx
-"use client";
+// src/features/products/ProductsTable.tsx
 import { useEffect } from "react";
-import { useProductsStore } from "@store/products.store";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchFirstPage,
+  fetchNextPage,
+} from "@/features/products/products.thunks";
+import {
+  selectItems,
+  selectNextCursor,
+  selectStatus,
+} from "@/features/products/products.selectors";
+import type { AppDispatch } from "@/store";
 
 export default function ProductsTable() {
-  // NO devuelvas un objeto en el selector: crea referencias nuevas y re-renderiza.
-  const items = useProductsStore((s) => s.items);
-  const loading = useProductsStore((s) => s.loading);
-  const error = useProductsStore((s) => s.error);
-
-  // Ref estable a la acción del store. No la pongas en deps.
-  const fetchProducts = useProductsStore.getState().fetch;
+  const dispatch = useDispatch<AppDispatch>();
+  const items = useSelector(selectItems);
+  const nextCursor = useSelector(selectNextCursor);
+  const status = useSelector(selectStatus);
 
   useEffect(() => {
-    fetchProducts(); // una sola vez
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (loading) return <p>Cargando…</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
-  if (!items.length) return <p>Sin resultados.</p>;
+    dispatch(fetchFirstPage());
+  }, [dispatch]);
 
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead>
-        <tr>
-          <th style={{ textAlign: "left" }}>ID</th>
-          <th style={{ textAlign: "left" }}>Título</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((i) => (
-          <tr key={i.id}>
-            <td>{i.id}</td>
-            <td>{i.title}</td>
-          </tr>
+    <div>
+      <ul>
+        {items.map((p) => (
+          <li key={p.id}>{p.name}</li>
         ))}
-      </tbody>
-    </table>
+      </ul>
+
+      {nextCursor && (
+        <button
+          disabled={status === "loading"}
+          onClick={() => dispatch(fetchNextPage())}
+        >
+          {status === "loading" ? "Cargando..." : "Cargar más"}
+        </button>
+      )}
+    </div>
   );
 }
