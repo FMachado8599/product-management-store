@@ -7,7 +7,6 @@ import {
 import type { RootState } from "@/store";
 import type {
   ApiItem,
-  Filters,
   ProductsResponse,
   ProductsState,
 } from "@/types/products";
@@ -24,18 +23,37 @@ const initialState: ProductsState = {
   nextCursor: null,
 };
 
+function dedupeAppend(base: ApiItem[], incoming: ApiItem[]) {
+  const seen = new Set(base.map((p) => p.id));
+  const merged = [...base];
+  for (const it of incoming) if (!seen.has(it.id)) merged.push(it);
+  return merged;
+}
+
 export const fetchProducts = createAsyncThunk<
   ProductsResponse,
-  void,
+  { append?: boolean } | void,
   { state: RootState; rejectValue: string }
 >(
   "products/fetchProducts",
-  async (_void, { getState, signal, rejectWithValue }) => {
-    const { page, pageSize, filters } = getState().products;
+  async (arg, { getState, signal, rejectWithValue }) => {
+    const { page, pageSize, filters, nextCursor } = getState().products;
+    const append = Boolean((arg as { append?: boolean } | undefined)?.append);
+
     try {
-      return await listProducts({ page, pageSize, filters }, signal);
+      if (append) {
+        if (!nextCursor) return rejectWithValue("No hay más páginas");
+        return await listProducts(
+          { cursor: nextCursor, pageSize, filters },
+          signal
+        );
+      }
+      return await listProducts(
+        { page: page ?? 1, pageSize, filters, cursor: null },
+        signal
+      );
     } catch (err: any) {
-      if (err?.name === "AbortError") throw err; // respetar abort
+      if (err?.name === "AbortError") throw err;
       return rejectWithValue(err?.message ?? "Error al listar productos");
     }
   }
@@ -48,14 +66,20 @@ const productsSlice = createSlice({
     setQuery(state, action: PayloadAction<string>) {
       state.filters.q = action.payload;
       state.page = 1;
+      state.cursor = null;
+      state.nextCursor = null;
     },
     setCategory(state, action: PayloadAction<string | undefined>) {
       state.filters.category = action.payload;
       state.page = 1;
+      state.cursor = null;
+      state.nextCursor = null;
     },
     setInStock(state, action: PayloadAction<boolean | undefined>) {
       state.filters.inStock = action.payload;
       state.page = 1;
+      state.cursor = null;
+      state.nextCursor = null;
     },
     setPage(state, action: PayloadAction<number>) {
       state.page = action.payload;
@@ -63,6 +87,8 @@ const productsSlice = createSlice({
     setPageSize(state, action: PayloadAction<number>) {
       state.pageSize = action.payload;
       state.page = 1;
+      state.cursor = null;
+      state.nextCursor = null;
     },
     selectProduct(state, action: PayloadAction<string | undefined>) {
       state.selectedId = action.payload;
@@ -78,26 +104,70 @@ const productsSlice = createSlice({
         state.total = Math.max(0, state.total - 1);
       }
     },
+    inlineUpdate(
+      state,
+      action: PayloadAction<{
+        id: string;
+        updates: Partial<ApiItem> & { asignado?: string | undefined };
+      }>
+    ) {
+      const { id, updates } = action.payload;
+      const i = state.items.findIndex((p) => p.id === id);
+      if (i < 0) return;
+
+      const next: Partial<ApiItem> = { ...updates };
+
+      if ("asignado" in updates) {
+        const name = updates.asignado;
+        (next as any).asignados = name ? [{ id: null, name }] : [];
+        delete (next as any).asignado;
+      }
+
+      state.items[i] = { ...state.items[i], ...next };
+    },
   },
+
   extraReducers(builder) {
     builder
-      .addCase(fetchProducts.pending, (state) => {
-        state.status = "loading";
-        state.error = undefined;
+      .addCase(fetchProducts.rejected, (state, action) => {
+        const msg =
+          (action.payload as string) ||
+          action.error.message ||
+          "Error inesperado";
+        if (msg === "No hay más páginas") {
+          state.error = undefined;
+          state.status = "succeeded";
+          return;
+        }
+        state.status = "failed";
+        state.error = msg;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
+        const append = Boolean((action.meta.arg as any)?.append);
         state.status = "succeeded";
-        state.items = action.payload.items;
-        state.total = action.payload.total;
-        state.page = action.payload.page;
-        state.pageSize = action.payload.pageSize;
-        state.cursor = action.payload.cursor;
-        state.nextCursor = action.payload.nextCursor;
+
+        if (append) {
+          state.items = dedupeAppend(state.items, action.payload.items ?? []);
+          state.total = action.payload.total ?? state.total;
+          state.page = action.payload.page ?? state.page;
+          state.pageSize = action.payload.pageSize ?? state.pageSize;
+          state.cursor = action.payload.cursor ?? state.cursor;
+          state.nextCursor = action.payload.nextCursor ?? null;
+        } else {
+          state.items = action.payload.items ?? [];
+          state.total = action.payload.total ?? null;
+          state.page = action.payload.page ?? 1;
+          state.pageSize = action.payload.pageSize ?? state.pageSize;
+          state.cursor = action.payload.cursor ?? null;
+          state.nextCursor = action.payload.nextCursor ?? null;
+        }
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = "failed";
         state.error =
-          action.payload || action.error.message || "Error inesperado";
+          (action.payload as string) ||
+          action.error.message ||
+          "Error inesperado";
       });
   },
 });
@@ -111,15 +181,17 @@ export const {
   selectProduct,
   upsertOne,
   removeOne,
+  inlineUpdate,
 } = productsSlice.actions;
 
 export default productsSlice.reducer;
 
 export const selectProductsState = (s: RootState) => s.products;
-export const selectProducts = (s: RootState) => s.products.items;
+export const selectItems = (s: RootState) => s.products.items;
 export const selectStatus = (s: RootState) => s.products.status;
 export const selectError = (s: RootState) => s.products.error;
-
+export const selectNextCursor = (s: RootState) => s.products.nextCursor;
+export const selectHasMore = (s: RootState) => Boolean(s.products.nextCursor);
 export const selectPagination = createSelector(
   [
     (s: RootState) => s.products.page,
@@ -128,7 +200,6 @@ export const selectPagination = createSelector(
   ],
   (page, pageSize, total) => ({ page, pageSize, total })
 );
-
 export const selectFilters = (s: RootState) => s.products.filters;
 export const selectSelectedProduct = (s: RootState) =>
   s.products.items.find((p) => p.id === s.products.selectedId);

@@ -7,14 +7,15 @@ export interface ApiItem {
   imageUrl?: string | null;
   tipo?: "Nuevo" | "Modificar" | null;
   inStock?: boolean | null;
-  prioridad?: string | null;
-  estado?: string | null;
+  prioridad?: "baja" | "media" | "alta" | null;
+  estado?: "Pendiente" | "En progreso" | "Terminado" | null;
   asignados?: {
     id: string | null;
     name: string | null;
     avatar?: string | null;
   }[];
   lastEdited?: string | null;
+  requestedBy?: string | null;
 }
 
 export interface UiProduct {

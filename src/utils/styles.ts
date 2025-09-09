@@ -1,7 +1,6 @@
-// src/lib/utils/styles.ts
 import type { Estado, Prioridad } from "@/lib/interfaces";
 
-export const getPriorityColor = (p: Prioridad) => {
+export const getPriorityColor = (p?: Prioridad | null) => {
   switch (p) {
     case "alta":
       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
@@ -14,7 +13,7 @@ export const getPriorityColor = (p: Prioridad) => {
   }
 };
 
-export const getStateColor = (s: Estado) => {
+export const getStateColor = (s?: Estado | null) => {
   switch (s) {
     case "Terminado":
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";

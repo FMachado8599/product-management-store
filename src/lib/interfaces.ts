@@ -1,4 +1,3 @@
-// lib/types.ts
 export type Prioridad = "baja" | "media" | "alta";
 export type Estado = "Pendiente" | "En progreso" | "Terminado";
 export type Usuario = "Silvana" | "Facundo" | "Caroline" | "Nicolás";
@@ -18,12 +17,11 @@ export interface Product {
   estado: Estado;
   creador: Usuario;
   comentario?: string;
-  fecha: string; // ISO date
-  imagen?: string; // opcional, para /resolve
-  categoria?: Categoria; // opcional
+  fecha: string;
+  imagen?: string;
+  categoria?: Categoria;
 }
 
-/** Constantes que ya usabas en el componente */
 export const USERS: Asignable[] = ["Facundo", "Caroline", "Nicolás"];
 export const PRIORITIES: ReadonlyArray<Prioridad> = [
   "baja",

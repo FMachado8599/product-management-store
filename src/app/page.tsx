@@ -59,7 +59,7 @@
 // import { useTheme } from "next-themes";
 // import type { Product, Estado, Prioridad } from "@/lib/interfaces";
 // import { USERS, PRIORITIES, STATES } from "@/lib/interfaces";
-// import { useItems } from "@/lib/use-items";
+// import { useItems } from "@/utils/use-items";
 // import { getPriorityColor, getStateColor } from "@/lib/utils/styles";
 
 // type AssignOption = (typeof USERS)[number] | "unassigned";

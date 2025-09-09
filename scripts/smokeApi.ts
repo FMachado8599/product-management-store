@@ -1,5 +1,5 @@
 // scripts/smoke-api.ts (solo para probar en dev; no se ejecuta en build)
-import { Api } from "../lib/api";
+import { Api } from "../src/utils/api";
 
 async function main() {
   const items = await Api.getItems();

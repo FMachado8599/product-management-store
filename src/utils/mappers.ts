@@ -38,7 +38,3 @@ export function apiToUi(p: ApiItem): UiProduct {
     origen: p.tipo === "Nuevo" || p.tipo === "Modificar" ? p.tipo : undefined,
   };
 }
-
-export function apiListToUi(items: ApiItem[]): UiProduct[] {
-  return items.map(apiToUi);
-}

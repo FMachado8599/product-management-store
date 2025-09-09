@@ -1,51 +1,49 @@
+// src/services/products.service.ts
+import { apiClient } from "@/services/apiClient";
 import type { ListProductsParams, ProductsResponse } from "@/types/products";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+/**
+ * Construye el query string a partir de los params anidados
+ */
+function buildProductsQuery(params: ListProductsParams) {
+  const query: Record<string, string | boolean | number | undefined> = {};
 
+  // filtros anidados
+  if (params.filters?.q?.trim()) {
+    query.q = params.filters.q.trim();
+  }
+  if (params.filters?.category?.trim()) {
+    query.category = params.filters.category.trim();
+  }
+  if (typeof params.filters?.inStock === "boolean") {
+    query.inStock = params.filters.inStock;
+  }
+
+  // pageSize es obligatorio según tu type
+  query.pageSize = params.pageSize;
+
+  // Regla: cursor y page no coexisten
+  if (params.cursor?.trim()) {
+    query.cursor = params.cursor.trim();
+  } else {
+    query.page = params.page ?? 1;
+  }
+
+  return query;
+}
+
+/**
+ * listProducts → hace GET a /products con query armado.
+ * Usa apiClient y devuelve ProductsResponse sin modificar.
+ */
 export async function listProducts(
-  { page = 1, pageSize, cursor = null, filters }: ListProductsParams,
+  params: ListProductsParams,
   signal?: AbortSignal
 ): Promise<ProductsResponse> {
-  if (!BASE_URL) {
-    throw new Error("Falta NEXT_PUBLIC_API_BASE_URL en .env.local");
-  }
+  const query = buildProductsQuery(params);
 
-  const params = new URLSearchParams({
-    q: filters.q ?? "",
-    pageSize: String(pageSize),
-    ...(filters.category ? { category: filters.category } : {}),
-    ...(filters.inStock != null ? { inStock: String(filters.inStock) } : {}),
-  });
-
-  if (cursor) {
-    params.set("cursor", cursor);
-  } else {
-    params.set("page", String(page));
-  }
-
-  const url = `${BASE_URL}/products?${params.toString()}`;
-
-  const res = await fetch(url, {
-    method: "GET",
-    cache: "no-store",
+  return apiClient.get<ProductsResponse>("/products", {
+    query,
     signal,
-    headers: { Accept: "application/json" },
   });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
-  }
-
-  const data = (await res.json()) as ProductsResponse;
-
-  return {
-    items: data.items ?? [],
-    total: data.total ?? null,
-    // si vino cursor en la request, page es null; si no, devolvemos el page que pediste
-    page: data.page ?? (cursor ? null : page),
-    pageSize: data.pageSize ?? pageSize,
-    cursor: data.cursor ?? cursor ?? null,
-    nextCursor: data.nextCursor ?? null,
-  };
 }
