@@ -1184,24 +1184,22 @@
 "use client";
 import { useEffect } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchProducts } from "@/store/slices/productsSlice";
+import { fetchFirstPage } from "@/features/products/products.thunks";
 import ProductsTabs from "@c/products/tabs/ProductsTabs";
 import FiltersBar from "@c/products/filters/FiltersBar";
-import ProductsTable from "@c/products/table/ProductsTable";
-import EditTaskForm from "@/components/products/forms/EditTaskForm";
+import ProductsTable from "@/components/products/table/ProductsTable";
 
 export default function ProductosPage() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(fetchProducts());
+    dispatch(fetchFirstPage());
   }, [dispatch]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(360px,480px)_1fr] gap-4 p-4">
       <section className="space-y-4">
         <ProductsTabs />
-        <EditTaskForm />
       </section>
       <section className="space-y-2">
         <FiltersBar />

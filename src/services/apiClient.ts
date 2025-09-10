@@ -2,8 +2,7 @@ type Primitive = string | number | boolean | null | undefined;
 type QueryValue = Primitive | Primitive[] | Record<string, Primitive>;
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") ||
-  "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "/api";
 
 function buildQuery(query?: Record<string, QueryValue>): string {
   if (!query) return "";
@@ -87,13 +86,7 @@ async function fetchWithTimeout(
   }
 }
 
-async function request<T = unknown>(
-  path: string,
-  opts: RequestOptions = {}
-): Promise<T> {
-  if (!API_BASE)
-    throw new Error("Falta NEXT_PUBLIC_API_BASE_URL en .env.local");
-
+async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const {
     method = "GET",
     query,
@@ -110,14 +103,13 @@ async function request<T = unknown>(
     headers: {
       Accept: "application/json",
       ...(body ? { "Content-Type": "application/json" } : {}),
-      ...headers,
+      ...(headers ?? {}),
     },
     body: body ? JSON.stringify(body) : undefined,
     cache: cache ?? "no-store",
   };
 
   const res = await fetchWithTimeout(url, init, timeoutMs, signal);
-
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new HttpError(
@@ -130,7 +122,6 @@ async function request<T = unknown>(
 
   const ct = res.headers.get("content-type") || "";
   if (ct.includes("application/json")) return (await res.json()) as T;
-
   const text = await res.text().catch(() => "");
   return text as T;
 }

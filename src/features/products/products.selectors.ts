@@ -8,7 +8,7 @@ export const selectStatus = createSelector(base, (s) => s.status);
 export const selectError = createSelector(base, (s) => s.error);
 export const selectNextCursor = createSelector(base, (s) => s.nextCursor);
 export const selectFilters = createSelector(base, (s) => s.filters);
-
+export const selectPageSize = (s: RootState) => s.products.pageSize;
 export const selectPagination = createSelector(base, (s) => ({
   page: s.page,
   pageSize: s.pageSize,

@@ -1,9 +1,7 @@
-import { http } from "@/services/apiClient";
+import { apiClient } from "@/services/apiClient";
 import type { TaskModificar } from "@/types/task";
 
 export function createTaskModificar(body: TaskModificar) {
-  return http<{ id: string; ok: true }>(`/tasks/modificar`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  // ¡No hagas JSON.stringify acá! apiClient ya serializa el body.
+  return apiClient.post<{ id: string; ok: true }>("/tasks/modificar", body);
 }
